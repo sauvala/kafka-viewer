@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  kafka-viewer:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/code
+      - logvolume01:/var/log
+    links:
+      - redis
+  redis:
+    image: redis

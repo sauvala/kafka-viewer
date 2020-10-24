@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: com.kafkaviewer
+testFramework: junit
+sourceLanguage: java
+buildTool: maven
+features: [ annotation-api, app-name, docker, http-client, java, java-application, junit, kafka, logback, maven, netty-server, readme, shade, yaml ]
