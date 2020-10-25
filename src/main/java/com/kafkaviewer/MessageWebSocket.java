@@ -6,45 +6,35 @@ import io.micronaut.websocket.annotation.OnClose;
 import io.micronaut.websocket.annotation.OnMessage;
 import io.micronaut.websocket.annotation.OnOpen;
 import io.micronaut.websocket.annotation.ServerWebSocket;
-import org.reactivestreams.Publisher;
 
-import java.util.function.Predicate;
-
-@ServerWebSocket("/ws/chat/{topic}/{username}")
+@ServerWebSocket("/ws/listen/{topic}")
 public class MessageWebSocket {
-    private WebSocketBroadcaster broadcaster;
+    private final WebSocketBroadcaster broadcaster;
+    private final KafkaMessageListener kafkaMessageListener;
 
     public MessageWebSocket(WebSocketBroadcaster broadcaster) {
         this.broadcaster = broadcaster;
+        this.kafkaMessageListener = new KafkaMessageListener();
     }
 
     @OnOpen
-    public Publisher<String> onOpen(String topic, String username, WebSocketSession session) {
-        String msg = "[" + username + "] Joined!";
-
-        return broadcaster.broadcast(msg, isValid(topic));
+    public void onOpen(String topic, WebSocketSession session) {
+        kafkaMessageListener
+                .Listen(topic)
+                .subscribe(broadcaster::broadcastSync, Throwable::printStackTrace);
     }
 
     @OnMessage
-    public Publisher<String> onMessage(
+    public void onMessage(
             String topic,
-            String username,
             String message,
             WebSocketSession session) {
-        String msg = "[" + username + "] " + message;
-        return broadcaster.broadcast(msg, isValid(topic));
+        broadcaster.broadcastSync(topic);
     }
 
     @OnClose
-    public Publisher<String> onClose(
+    public void onClose(
             String topic,
-            String username,
             WebSocketSession session) {
-        String msg = "[" + username + "] Disconnected!";
-        return broadcaster.broadcast(msg, isValid(topic));
-    }
-
-    private Predicate<WebSocketSession> isValid(String topic) {
-        return s -> topic.equalsIgnoreCase(s.getUriVariables().get("topic", String.class, null));
     }
 }
